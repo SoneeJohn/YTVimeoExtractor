@@ -1,6 +1,6 @@
 //
 //  YTVimeoVideoTestCase.m
-//  Sample
+//  YTVimeoExtractor
 //
 //  Created by Soneé Delano John on 12/2/15.
 //  Copyright © 2015 Louis Larpin. All rights reserved.
@@ -10,6 +10,7 @@
 #import "YTVimeoVideo.h"
 #import "YTVimeoExtractorOperation.h"
 #import "YTVimeoError.h"
+#import "YTVimeoVideo+Private.h"
 @interface YTVimeoVideoTestCase : XCTestCase
 
 @end
@@ -73,6 +74,35 @@
     [video extractVideoInfoWithCompletionHandler:^(NSError * _Nullable error) {
         
         XCTAssertNotNil(video.thumbnailURLs);
+        
+        [expectation fulfill];
+    }];
+    
+    [self waitForExpectationsWithTimeout:15 handler:nil];
+}
+
+-(void)testConvenienceMethods{
+    __weak XCTestExpectation *expectation = [self expectationWithDescription:@""];
+    
+    NSString *filePath = [[[NSBundle bundleForClass:[self class]] resourcePath] stringByAppendingPathComponent:@"testdata.plist"];
+    
+    NSData *buffer = [NSData dataWithContentsOfFile:filePath];
+    NSDictionary *myDictionary = (NSDictionary*) [NSKeyedUnarchiver unarchiveObjectWithData:buffer];
+    
+    YTVimeoVideo *video = [[YTVimeoVideo alloc]initWithIdentifier:@"147318819" info:myDictionary];
+    
+    [video extractVideoInfoWithCompletionHandler:^(NSError * _Nullable error) {
+        
+        XCTAssertNotNil(video.streamURLs);
+        
+        NSURL *highestURL = video.streamURLs[@(YTVimeoVideoQualityHD1080)] ?: video.streamURLs[@(YTVimeoVideoQualityHD720)] ?: video.streamURLs [@(YTVimeoVideoQualityMedium480)]?: video.streamURLs[@(YTVimeoVideoQualityMedium360)]?:video.streamURLs[@(YTVimeoVideoQualityLow270)];
+        
+        NSURL *lowestURL = video.streamURLs[@(YTVimeoVideoQualityLow270)] ?: video.streamURLs[@(YTVimeoVideoQualityMedium360)] ?: video.streamURLs[@(YTVimeoVideoQualityMedium480)]?: video.streamURLs[@(YTVimeoVideoQualityHD720)]?:video.streamURLs[@(YTVimeoVideoQualityHD1080)];
+        
+        XCTAssertEqual(highestURL, [video highestQualityStreamURL]);
+        
+        XCTAssertEqual(lowestURL, [video lowestQualityStreamURL]);
+
         
         [expectation fulfill];
     }];
@@ -149,6 +179,35 @@
             
             [expectation fulfill];
         }];
+        
+        
+    };
+    
+    [operation start];
+    
+    [self waitForExpectationsWithTimeout:15 handler:nil];
+}
+
+#pragma mark -
+
+-(void)testEquality{
+    
+    __weak XCTestExpectation *expectation = [self expectationWithDescription:@""];
+    
+    YTVimeoExtractorOperation *operation = [[YTVimeoExtractorOperation alloc]initWithVideoIdentifier:@"148222047" referer:nil];
+    
+    operation.completionBlock = ^{
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Warc-retain-cycles"
+        
+        YTVimeoVideo *video1 = [[YTVimeoVideo alloc]initWithIdentifier:@"148222047" info:operation.jsonDict];
+        YTVimeoVideo *video2 = [[YTVimeoVideo alloc]initWithIdentifier:@"148222047" info:operation.jsonDict];
+        
+        XCTAssertEqualObjects(video1, video2, @"Both objects should be equal.");
+        [expectation fulfill];
+
+        
+#pragma clang diagnostic pop
         
         
     };

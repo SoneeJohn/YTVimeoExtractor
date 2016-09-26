@@ -26,8 +26,11 @@
     return sharedExtractor;
 }
 
-- (id)init {
-    if (self = [super init]) {
+- (instancetype)init {
+    
+    self = [super init];
+    
+    if (self) {
         
         _extractorOperationQueue = [[NSOperationQueue alloc]init];
         if ([_extractorOperationQueue respondsToSelector:@selector(qualityOfService)]) {
@@ -48,7 +51,7 @@
     
     if (videoIdentifier.length == 0) {
         
-        NSError *invalidIDError = [NSError errorWithDomain:YTVimeoVideoErrorDomain code:YTVimeoErrorInvalidVideoIdentifier userInfo:@{NSLocalizedDescriptionKey:@"The operation was unable to finish sucessfully.", NSLocalizedFailureReasonErrorKey: @"The video identifier is invalid."}];
+        NSError *invalidIDError = [NSError errorWithDomain:YTVimeoVideoErrorDomain code:YTVimeoErrorInvalidVideoIdentifier userInfo:@{NSLocalizedDescriptionKey:@"The operation was unable to finish successfully.", NSLocalizedFailureReasonErrorKey: @"The video identifier is invalid."}];
 
         completionHandler(nil, invalidIDError);
 
@@ -86,7 +89,7 @@
     
     if (videoURL.length == 0) {
         
-        NSError *invalidIDError = [NSError errorWithDomain:YTVimeoVideoErrorDomain code:YTVimeoErrorInvalidVideoIdentifier userInfo:@{NSLocalizedDescriptionKey:@"The operation was unable to finish sucessfully.", NSLocalizedFailureReasonErrorKey: @"The video identifier is invalid."}];
+        NSError *invalidIDError = [NSError errorWithDomain:YTVimeoVideoErrorDomain code:YTVimeoErrorInvalidVideoIdentifier userInfo:@{NSLocalizedDescriptionKey:@"The operation was unable to finish successfully.", NSLocalizedFailureReasonErrorKey: @"The video identifier is invalid."}];
         
         completionHandler(nil, invalidIDError);
         
@@ -98,7 +101,7 @@
    
     if (isValidURL == NO) {
         
-        NSError *invalidIDError = [NSError errorWithDomain:YTVimeoVideoErrorDomain code:YTVimeoErrorInvalidVideoIdentifier userInfo:@{NSLocalizedDescriptionKey:@"The operation was unable to finish sucessfully.", NSLocalizedFailureReasonErrorKey: @"The video identifier is invalid."}];
+        NSError *invalidIDError = [NSError errorWithDomain:YTVimeoVideoErrorDomain code:YTVimeoErrorInvalidVideoIdentifier userInfo:@{NSLocalizedDescriptionKey:@"The operation was unable to finish successfully.", NSLocalizedFailureReasonErrorKey: @"The video identifier is invalid."}];
         
         completionHandler(nil, invalidIDError);
 

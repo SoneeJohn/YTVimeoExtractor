@@ -1,6 +1,12 @@
 ## YTVimeoExtractor
 
-[![Build Status](https://travis-ci.org/SoneeJohn/YTVimeoExtractor.svg?branch=v1.0.0-develop)](https://travis-ci.org/SoneeJohn/YTVimeoExtractor)
+[![Build Status](https://travis-ci.org/lilfaf/YTVimeoExtractor.svg?branch=master)](https://travis-ci.org/lilfaf/YTVimeoExtractor)
+[![Carthage
+compatible](https://img.shields.io/badge/Carthage-compatible-4BC51D.svg?style=flat)](https://github.com/Carthage/Carthage)
+[![codecov.io](https://codecov.io/github/lilfaf/YTVimeoExtractor/coverage.svg?branch=development)](https://codecov.io/github/lilfaf/YTVimeoExtractor?branch=development)
+[![GitHub release](https://img.shields.io/github/release/lilfaf/YTVimeoExtractor.svg)](https://github.com/lilfaf/YTVimeoExtractor/releases)
+[![CocoaPods Platform Status](https://img.shields.io/cocoapods/p/YTVimeoExtractor.svg)](https://github.com/lilfaf/YTVimeoExtractor/releases)
+[![CocoaPods Docs](https://img.shields.io/cocoapods/metrics/doc-percent/YTVimeoExtractor.svg)](http://cocoadocs.org/docsets/YTVimeoExtractor/)
 
 YTVimeoExtractor extracts the MP4 streams of Vimeo videos, which then can be used to play via a `MPMoviePlayerViewController` or `AVPlayerView`.
 
@@ -17,10 +23,12 @@ YTVimeoExtractor extracts the MP4 streams of Vimeo videos, which then can be use
 |---------------|----------------|
 | `YTVimeoExtractor`  |   The `YTVimeoExtractor` is the main class and its sole purpose is to fetch information about Vimeo videos. Use the two main methods `fetchVideoWithIdentifier:withReferer:completionHandler:` or `fetchVideoWithVimeoURL:withReferer:completionHandler:` to obtain video information.  |
 | `YTVimeoExtractorOperation`  |   `YTVimeoExtractorOperation` is a subclass of `NSOperation` and is used to fetch and parse out information about Vimeo videos. This a low level class. Generally speaking, you should use the higher level `YTVimeoExtractor` class.   |
-|`YTVimeoURLParser`			    |	`YTVimeoURLParser` is used to validate and parse put Vimeo URLs. The sole purpose of the class is to check if a given URL can be handled by the `YTVimeoExtractor` class.|
-|`YTVimeoVideo`|  	`YTVimeoVideo` represents a Vimeo video. Use this class to access information about a particular video. Generally, you should not initialize this class, instead use the two main methods of the `YTVimeoExtractor` class.|
+|`YTVimeoURLParser`			    |	`YTVimeoURLParser` is used to validate and parse put Vimeo URLs. The main purpose of the class is to check if a given URL can be handled by the `YTVimeoExtractor` class.|
+|`YTVimeoVideo`|  	`YTVimeoVideo` represents a Vimeo video. Use this class to access information about a particular video.  Do not manually initialize a `YTVimeoVideo` object. Using the `-init` method will throw an exception, instead use the two main methods of the `YTVimeoExtractor` class to obtain a `YTVimeoVideo` object. |
 
 ## Installation
+
+### CocoaPods
 
 The preferred way of installation is via [CocoaPods](http://cocoapods.org). Just add to your Podfile
 
@@ -36,6 +44,29 @@ Alternatively you can just copy the YTVimeoExtractor folder to your project.
 #import "YTVimeoExtractor.h"
 ```
 
+### Carthage
+
+[Carthage](https://github.com/Carthage/Carthage) is a decentralized dependency
+manager that builds your dependencies and provides you with binary frameworks.
+
+You can install Carthage with [Homebrew](http://brew.sh/) using the following
+command:
+
+```bash
+$ brew update
+$ brew install carthage
+```
+
+To integrate YTVimeoExtractor into your Xcode project using Carthage, specify it in
+your `Cartfile`:
+
+```ogdl
+github "lilfaf/YTVimeoExtractor"
+```
+
+Run `carthage` to build the framework and drag the built
+`YTVimeoExtractor.framework` into your Xcode project.
+
 ## Usage
 
 Use the two block methods in the `YTVimeoExtractor` class. Both methods will call a completionHandler which is executed on the main thread. If the completion handler is nil, an exception will be thrown. The completionHandler has, two parameters a `YTVimeoVideo` object, if the operation was completed successfully, and a `NSError` object describing the network or parsing error that may have occurred.
@@ -47,22 +78,29 @@ Use the two block methods in the `YTVimeoExtractor` class. Both methods will cal
         
         if (video) {
             
-            NSDictionary *streamURLs = video.streamURLs;
-            //Will get the highest available quality.
-            NSString *url = streamURLs[@(YTVimeoVideoQualityHD1080)] ?: streamURLs[@(YTVimeoVideoQualityHD720)] ?: streamURLs [@(YTVimeoVideoQualityMedium480)]?: streamURLs[@(YTVimeoVideoQualityMedium360)]?:streamURLs[@(YTVimeoVideoQualityLow270)];
+            [self.titleTextField setStringValue:video.title];
             
-            AVPlayer *player = [[AVPlayer alloc]initWithURL:[NSURL URLWithString:url]];
+            //Will get the lowest available quality.
+            //NSURL *lowQualityURL = [video lowestQualityStreamURL];
+            
+            //Will get the highest available quality.
+            NSURL *highQualityURL = [video highestQualityStreamURL];
+            
+            
+            AVPlayer *player = [[AVPlayer alloc]initWithURL:highQualityURL];
     
             self.playerView.player = player;
             self.playerView.videoGravity = AVLayerVideoGravityResizeAspectFill;
             [self.playerView.player play];
-
+            [self.playerView becomeFirstResponder];
+        
         }else{
             
             [[NSAlert alertWithError:error]runModal];
         }
         
     }];
+
 
 ```
 
@@ -74,13 +112,15 @@ Use the two block methods in the `YTVimeoExtractor` class. Both methods will cal
         
         if (video) {
             
-            NSDictionary *streamURLs = video.streamURLs;
-            //Will get the highest available quality.
-            NSString *url = streamURLs[@(YTVimeoVideoQualityHD1080)] ?: streamURLs[@(YTVimeoVideoQualityHD720)] ?: streamURLs [@(YTVimeoVideoQualityMedium480)]?: streamURLs[@(YTVimeoVideoQualityMedium360)]?:streamURLs[@(YTVimeoVideoQualityLow270)];
+            self.titleLabel.text = [NSString stringWithFormat:@"Video Title: %@",video.title];
+            //Will get the lowest available quality.
+            //NSURL *lowQualityURL = [video lowestQualityStreamURL];
             
-            NSURL *movieURL = [NSURL URLWithString:url];
-            MPMoviePlayerViewController *moviePlayerViewController = [[MPMoviePlayerViewController alloc]initWithContentURL:movieURL];
-         
+            //Will get the highest available quality.
+            NSURL *highQualityURL = [video highestQualityStreamURL];
+            
+            MPMoviePlayerViewController *moviePlayerViewController = [[MPMoviePlayerViewController alloc]initWithContentURL:highQualityURL];
+
             [self presentMoviePlayerViewControllerAnimated:moviePlayerViewController];
         }else{
            
@@ -105,12 +145,13 @@ If the Vimeo video has domain-level restrictions and can only be played from par
         
         if (video) {
             
-            NSDictionary *streamURLs = video.streamURLs;
-            //Will get the highest available quality.
-            NSString *url = streamURLs[@(YTVimeoVideoQualityHD1080)] ?: streamURLs[@(YTVimeoVideoQualityHD720)] ?: streamURLs [@(YTVimeoVideoQualityMedium480)]?: streamURLs[@(YTVimeoVideoQualityMedium360)]?:streamURLs[@(YTVimeoVideoQualityLow270)];
+            //Will get the lowest available quality.
+            //NSURL *lowQualityURL = [video lowestQualityStreamURL];
             
-            NSURL *movieURL = [NSURL URLWithString:url];
-            MPMoviePlayerViewController *moviePlayerViewController = [[MPMoviePlayerViewController alloc]initWithContentURL:movieURL];
+            //Will get the highest available quality.
+            NSURL *highQualityURL = [video highestQualityStreamURL];
+            
+            MPMoviePlayerViewController *moviePlayerViewController = [[MPMoviePlayerViewController alloc]initWithContentURL:highQualityURL];
          
             [self presentMoviePlayerViewControllerAnimated:moviePlayerViewController];
         }else{
